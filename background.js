@@ -14,10 +14,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-const __HOSTNAME__ = "https://halo.rest";
+const __HOSTNAME__ = "https://halopl.us/api";
 const __LOCAL_DB__ = chrome.storage.sync;
-const __GATEWAY_URL__ = "https://gateway.halo.gcu.edu";
-const __VALIDATION_URL__ = "https://halo.gcu.edu/api/token-validate/";
 const __API__ = `${__HOSTNAME__}/api`;
 const __VERSION__ = chrome.runtime.getManifest().version;
 

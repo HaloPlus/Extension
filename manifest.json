@@ -1,14 +1,25 @@
 {
   "manifest_version": 3,
   "name": "Halo+",
-  "host_permissions": ["*://halo.gcu.edu/", "*://localhost/", "*://halo.rest/"],
-  "permissions": ["cookies", "storage"],
+  "host_permissions": [
+    "*://halo.gcu.edu/",
+    "*://localhost/",
+    "*://halopl.us/"
+  ],
+  "permissions": [
+    "cookies",
+    "storage"
+  ],
   "minimum_chrome_version": "92",
   "version": "1.0.0",
   "content_scripts": [
     {
-      "matches": ["https://halo.gcu.edu/*"],
-      "js": ["script.js"],
+      "matches": [
+        "https://halo.gcu.edu/*"
+      ],
+      "js": [
+        "script.js"
+      ],
       "run_at": "document_start"
     }
   ],

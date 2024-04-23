@@ -15,12 +15,9 @@
  */
 
 // Constant Variables
-const __VERSION__ = chrome.runtime.getManifest().version;
-const __HOSTNAME__ = "http://halo.rest";
-const __CLIENT_ID__ = "1156338985686278174";
+const __HOSTNAME__ = "http://halopl.us";
 const __HEADER_ELEMENT__ = "#header_main_container > header > div";
 const __LOGIN__ = `${__HOSTNAME__}/login`;
-const __DISCORD_INVITE__ = "https://halo.rest/discord";
 
 document.addEventListener("DOMContentLoaded", function () {
   (async () => {
