@@ -15,22 +15,23 @@
  */
 
 // Constant Variables
-const __HOSTNAME__ = "http://halopl.us";
+const __HOSTNAME__ = "https://halopl.us";
 const __HEADER_ELEMENT__ = "#header_main_container > header > div";
 const __LOGIN__ = `${__HOSTNAME__}/login`;
 
-document.addEventListener("DOMContentLoaded", function () {
-  (async () => {
+document.addEventListener("DOMContentLoaded", async () => {
+  var _i = setInterval(() => {
     const parentNode = document.querySelector(__HEADER_ELEMENT__);
     if (parentNode == null) return;
+
+    clearInterval(_i);
 
     var port = chrome.runtime.connect({ name: "auth_session" });
 
     port.onMessage.addListener(({ auth_session }) => {
       const element = registerHaloButton(
         parentNode,
-        `<div class="MessagesButton_headerIconContainer__E34Wc"><button class="MuiButtonBase-root MuiIconButton-root MessagesButton_buttonWithoutCount__AR23S" tabindex="0" type="button" role="link" aria-label="Halo+ Main Button" style="width: 11rem; margin-left: 20px;"><span class="MuiIconButton-label"><p class="font-display-regular text-white text-sm ml-4 font-semibold leading-tight uppercase" style="margin: 0;"><span class="xxs:hidden sm:inline" id="halo_plus_span">${
-          !!auth_session ? "Sync to Halo+" : "Login to Halo+"
+        `<div class="MessagesButton_headerIconContainer__E34Wc"><button class="MuiButtonBase-root MuiIconButton-root MessagesButton_buttonWithoutCount__AR23S" tabindex="0" type="button" role="link" aria-label="Halo+ Main Button" style="width: 11rem; margin-left: 20px;"><span class="MuiIconButton-label"><p class="font-display-regular text-white text-sm ml-4 font-semibold leading-tight uppercase" style="margin: 0;"><span class="xxs:hidden sm:inline" id="halo_plus_span">${!!auth_session ? "Sync to Halo+" : "Login to Halo+"
         }</span></p></span><span class="MuiTouchRipple-root"></span></button></div>`
       );
 
@@ -42,7 +43,7 @@ document.addEventListener("DOMContentLoaded", function () {
             alert(
               success
                 ? "Synced your cookies to Halo+"
-                : 'Your cookies have been synced to Halo+ already!\n\nIf this "error" occurs frequently, that means Halo+ is automatically syncing your cookies and you don\'t need to do anything!'
+                : 'Your cookies have been synced to Halo+ already!\nFrom now on, Halo+ is automatically refreshing your cookies and you don\'t need to do anything!\n\nYou only need to check back to sync your cookies if the app tells you to!'
             );
           });
 
@@ -54,7 +55,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     port.postMessage({});
-  })();
+  }, 500);
 });
 
 // https://stackoverflow.com/a/10309703

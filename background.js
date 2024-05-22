@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 John Aquino
+ * Copyright (C) 2024 John Aquino
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -13,8 +13,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-
-const __HOSTNAME__ = "https://halopl.us/api";
+const __HOSTNAME__ = "https://halopl.us";
 const __LOCAL_DB__ = chrome.storage.sync;
 const __API__ = `${__HOSTNAME__}/api`;
 const __VERSION__ = chrome.runtime.getManifest().version;
@@ -40,7 +39,7 @@ const getCookies = async (url = "https://halo.gcu.edu") => {
 const pushCookiesToDatabase = async ({ cookie, auth_session }) => {
   // Send data to API so we can automate checking intervals.
   return await fetch(
-    `${__API__}/session/${auth_session}/update?auth_token=${cookie["TE1TX0FVVEg"]}&context_token=${cookie["TE1TX0NPTlRFWFQ"]}`,
+    `${__API__}/users/${auth_session}/update?auth_token=${cookie["TE1TX0FVVEg"]}&context_token=${cookie["TE1TX0NPTlRFWFQ"]}&csrf_token=${cookie["csrf"]}`,
     {
       method: "POST",
     }
@@ -53,18 +52,20 @@ const pushCookiesToDatabase = async ({ cookie, auth_session }) => {
 };
 
 async function syncCookiesToDatabase() {
-  const { TE1TX0FVVEg, TE1TX0NPTlRFWFQ } = await __LOCAL_DB__.get([
+  const { TE1TX0FVVEg, TE1TX0NPTlRFWFQ, csrf } = await __LOCAL_DB__.get([
     "TE1TX0FVVEg",
     "TE1TX0NPTlRFWFQ",
+    "csrf"
   ]);
 
   var { auth_session } = await getCookies(__HOSTNAME__);
 
-  if (!!TE1TX0FVVEg && !!TE1TX0NPTlRFWFQ) {
+  if (!!TE1TX0FVVEg && !!TE1TX0NPTlRFWFQ && !!csrf) {
     const success = await pushCookiesToDatabase({
       cookie: {
         TE1TX0FVVEg,
         TE1TX0NPTlRFWFQ,
+        csrf
       },
       auth_session,
     });
@@ -91,7 +92,7 @@ async function syncCookiesToDatabase() {
       }
 
       const isAuthenticated = await fetch(
-        `${__API__}/session/${auth_session}/validate`,
+        `${__API__}/users/${auth_session}/validate`,
         {
           method: "GET",
           headers: {
@@ -110,10 +111,12 @@ async function syncCookiesToDatabase() {
 
       return port.postMessage({ auth_session });
     } else if (port.name === "send_cookies") {
-      const { TE1TX0FVVEg, TE1TX0NPTlRFWFQ } = await getCookies();
+      const cookies = await getCookies();
+      const { TE1TX0FVVEg, TE1TX0NPTlRFWFQ } = cookies;
+      const csrf = cookies['__Host-next-auth.csrf-token'];
 
       const { last_updated } = await __LOCAL_DB__.get("last_updated");
-      if (Date.now() - (last_updated || Date.now()) < 15000) {
+      if (Date.now() - (last_updated ?? Date.now()) < 3600000) {
         console.log("[Halo+] User is on cooldown!");
         return port.postMessage({ success: false });
       }
@@ -131,6 +134,12 @@ async function syncCookiesToDatabase() {
       );
       if (stored_context_token != TE1TX0NPTlRFWFQ)
         await __LOCAL_DB__.set({ TE1TX0NPTlRFWFQ });
+
+      const { csrf: stored_csrf_token } = await __LOCAL_DB__.get(
+        "csrf"
+      );
+      if (stored_csrf_token != csrf)
+        await __LOCAL_DB__.set({ csrf });
 
       return port.postMessage({ success: await syncCookiesToDatabase() });
     }
