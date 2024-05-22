@@ -116,7 +116,7 @@ async function syncCookiesToDatabase() {
       const csrf = cookies['__Host-next-auth.csrf-token'];
 
       const { last_updated } = await __LOCAL_DB__.get("last_updated");
-      if (Date.now() - (last_updated ?? Date.now()) < 3600000) {
+      if (last_updated && (Date.now() - last_updated) < 3600000) {
         console.log("[Halo+] User is on cooldown!");
         return port.postMessage({ success: false });
       }
