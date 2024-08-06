@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 John Aquino
+ * Copyright (C) 2024 Lodestone Services LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -13,180 +13,67 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-const __DOMAINNAME__ = "https://webapi-elzoglb7jq-uc.a.run.app";
+
+// Constant Variables
 const __HOSTNAME__ = "https://halopl.us";
-const __LOCAL_DB__ = chrome.storage.sync;
-const __API__ = `${__DOMAINNAME__}/api`;
-const __VERSION__ = chrome.runtime.getManifest().version;
+const __HEADER_ELEMENT__ = "#header_main_container > header > div";
+const __LOGIN__ = `${__HOSTNAME__}/login`;
 
-const isCookieValid = (obj) => {
-  return (
-    obj?.hasOwnProperty("TE1TX0FVVEg") || obj?.hasOwnProperty("TE1TX0NPTlRFWFQ")
-  );
-};
+document.addEventListener("DOMContentLoaded", async () => {
+  var _i = setInterval(() => {
+    const parentNode = document.querySelector(__HEADER_ELEMENT__);
+    if (parentNode == null) return;
 
-const getCookies = async (url = "https://halo.gcu.edu") => {
-  try {
-    console.log("Getting cookies");
-    const cookies = await chrome.cookies.getAll({ url });
-    console.log("Cookies fetched:", cookies);
+    clearInterval(_i);
 
-    // Ensure cookies is an array before calling reduce
-    if (Array.isArray(cookies)) {
-      const cookieData = cookies.reduce((acc, { name, value }) => {
-        acc[name] = value;
-        return acc;
-      }, {});
-      console.log("Reduced cookie data:", cookieData);
-      return cookieData;
-    } else {
-      console.error("Expected an array of cookies, but got:", cookies);
-      return {};
-    }
-  } catch (e) {
-    console.error("Error getting cookies:", e);
-    return {};
-  }
-};
+    var port = chrome.runtime.connect({ name: "auth_session" });
 
-const pushCookiesToDatabase = async ({ cookie, auth_session }) => {
-  // Send data to API so we can automate checking intervals.
-  console.log("auth: " + cookie["TE1TX0FVVEg"]);
-  console.log("context: " + cookie["TE1TX0NPTlRFWFQ"]);
-  console.log("csrf: " + cookie["__Host-next-auth.csrf-token"]);
-  return await fetch(
-    `${__API__}/users/${auth_session}/update?auth_token=${cookie["TE1TX0FVVEg"]}&context_token=${cookie["TE1TX0NPTlRFWFQ"]}&csrf_token=${cookie["__Host-next-auth.csrf-token"]}`,
-    {
-      method: "POST",
-    },
-  )
-    .then(() => true)
-    .catch((err) => {
-      console.log(err);
-      return false;
-    });
-};
-
-async function syncCookiesToDatabase() {
-  try {
-    const { TE1TX0FVVEg, TE1TX0NPTlRFWFQ, csrf } = await __LOCAL_DB__.get([
-      "TE1TX0FVVEg",
-      "TE1TX0NPTlRFWFQ",
-      "__Host-next-auth.csrf-token",
-    ]);
-    console.log("TE1TX0FVVEg: " + TE1TX0FVVEg);
-    console.log("TE1TX0NPTlRFWFQ: " + TE1TX0NPTlRFWFQ);
-    console.log("csrf: " + csrf);
-
-    const cookies = await getCookies(__HOSTNAME__);
-    const auth_session = cookies["auth_session"];
-
-    if (TE1TX0FVVEg && TE1TX0NPTlRFWFQ && csrf) {
-      const success = await pushCookiesToDatabase({
-        cookie: {
-          TE1TX0FVVEg,
-          TE1TX0NPTlRFWFQ,
-          csrf,
-        },
-        auth_session,
-      });
-
-      console.log(
-        success
-          ? "[Halo+] Updated cookie to database."
-          : "[Halo+] Failed to update cookie to database.",
+    port.onMessage.addListener(({ auth_session }) => {
+      const element = registerHaloButton(
+        parentNode,
+        `<div class="MessagesButton_headerIconContainer__E34Wc"><button class="MuiButtonBase-root MuiIconButton-root MessagesButton_buttonWithoutCount__AR23S" tabindex="0" type="button" role="link" aria-label="Halo+ Main Button" style="width: 11rem; margin-left: 20px;"><span class="MuiIconButton-label"><p class="font-display-regular text-white text-sm ml-4 font-semibold leading-tight uppercase" style="margin: 0;"><span class="xxs:hidden sm:inline" id="halo_plus_span">${
+          !!auth_session ? "Sync to Halo+" : "Login to Halo+"
+        }</span></p></span><span class="MuiTouchRipple-root"></span></button></div>`,
       );
-      return success;
-    }
 
-    return false;
-  } catch (error) {
-    console.error("Error syncing cookies to database:", error);
-    return false;
+      element.addEventListener("click", () => {
+        if (!!auth_session) {
+          var port2 = chrome.runtime.connect({ name: "send_cookies" });
+
+          port2.onMessage.addListener(({ success }) => {
+            alert(
+              success
+                ? "Synced your cookies to Halo+"
+                : "Your cookies have been synced to Halo+ already!\nFrom now on, Halo+ is automatically refreshing your cookies so you don't have to do anything!\n\nTIP: You only need to check back to sync your cookies if the app tells you to!",
+            );
+          });
+
+          port2.postMessage({});
+        } else {
+          window.open(__LOGIN__, "_self");
+        }
+      });
+    });
+
+    port.postMessage({});
+  }, 500);
+});
+
+// https://stackoverflow.com/a/10309703
+function registerHaloButton(parent, str) {
+  var div = document.createElement("div");
+  div.innerHTML = str;
+  // Find Messages
+  var beforeNode,
+    index = 0;
+  for (var node of parent.children) {
+    if (node.innerText.includes("MESSAGES")) {
+      beforeNode = parent.children[(index += 1)];
+      break;
+    }
+    index++;
+  }
+  while (div.children.length > 0) {
+    return parent.insertBefore(div.children[0], beforeNode);
   }
 }
-
-(async () => {
-  console.log(`[Halo+] ${chrome.runtime.getManifest().name} v${__VERSION__}`);
-
-  chrome.runtime.onConnect.addListener(async (port) => {
-    if (port.name === "auth_session") {
-      console.log("[Halo+] Received auth_session request");
-      const cookies = await getCookies(__HOSTNAME__);
-      const auth_session = cookies["auth_session"];
-      console.log("auth_session: " + auth_session);
-
-      if (!auth_session) {
-        console.log("[Halo+] User doesn't have cookie");
-        return port.postMessage({ auth_session: null });
-      }
-      console.log("[Halo+] User has cookie");
-
-      const isAuthenticated = await fetch(
-        `${__API__}/users/${auth_session}/validate`,
-        {
-          method: "GET",
-          headers: {
-            accept: "*/*",
-            "content-type": "application/json",
-          },
-        },
-      )
-        .then((res) => res.status === 200)
-        .catch(() => false);
-
-      if (!isAuthenticated) {
-        console.log("[Halo+] User is not authorized");
-        return port.postMessage({ auth_session: null });
-      }
-
-      return port.postMessage({ auth_session });
-    } else if (port.name === "send_cookies") {
-      const cookies = await getCookies();
-      const { TE1TX0FVVEg, TE1TX0NPTlRFWFQ } = cookies;
-      const csrf = cookies["__Host-next-auth.csrf-token"];
-      console.log("TE1TX0FVVEg: " + TE1TX0FVVEg);
-      console.log("TE1TX0NPTlRFWFQ: " + TE1TX0NPTlRFWFQ);
-      console.log("csrf: " + csrf);
-
-      const { last_updated } = await __LOCAL_DB__.get("last_updated");
-      if (last_updated && Date.now() - last_updated < 3600000) {
-        console.log("[Halo+] User is on cooldown!");
-        return port.postMessage({ success: false });
-      }
-
-      await __LOCAL_DB__.set({ last_updated: Date.now() });
-
-      const { TE1TX0FVVEg: stored_auth_token } =
-        await __LOCAL_DB__.get("TE1TX0FVVEg");
-      if (stored_auth_token !== TE1TX0FVVEg)
-        await __LOCAL_DB__.set({ TE1TX0FVVEg });
-
-      const { TE1TX0NPTlRFWFQ: stored_context_token } =
-        await __LOCAL_DB__.get("TE1TX0NPTlRFWFQ");
-      if (stored_context_token !== TE1TX0NPTlRFWFQ)
-        await __LOCAL_DB__.set({ TE1TX0NPTlRFWFQ });
-
-      const { csrf: stored_csrf_token } = await __LOCAL_DB__.get("csrf");
-      if (stored_csrf_token !== csrf) await __LOCAL_DB__.set({ csrf });
-
-      return port.postMessage({ success: await syncCookiesToDatabase() });
-    }
-  });
-
-  chrome.cookies.onChanged.addListener(async ({ cookie }) => {
-    if (!cookie || !Object.keys(cookie).length)
-      return console.log(
-        "[Halo+] Cookie object was determined to be invalid. Skipping process.",
-      );
-
-    if (cookie.domain === "halo.gcu.edu") {
-      const stored_cookie = await __LOCAL_DB__.get(cookie.name);
-      if (stored_cookie[cookie.name] !== cookie.value) {
-        // Check if the value actually updated.
-        await __LOCAL_DB__.set({ [cookie.name]: cookie.value });
-        await syncCookiesToDatabase();
-      }
-    }
-  });
-})();

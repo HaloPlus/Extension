@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 John Aquino
+ * Copyright (C) 2024 Lodestone Services LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -31,8 +31,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     port.onMessage.addListener(({ auth_session }) => {
       const element = registerHaloButton(
         parentNode,
-        `<div class="MessagesButton_headerIconContainer__E34Wc"><button class="MuiButtonBase-root MuiIconButton-root MessagesButton_buttonWithoutCount__AR23S" tabindex="0" type="button" role="link" aria-label="Halo+ Main Button" style="width: 11rem; margin-left: 20px;"><span class="MuiIconButton-label"><p class="font-display-regular text-white text-sm ml-4 font-semibold leading-tight uppercase" style="margin: 0;"><span class="xxs:hidden sm:inline" id="halo_plus_span">${!!auth_session ? "Sync to Halo+" : "Login to Halo+"
-        }</span></p></span><span class="MuiTouchRipple-root"></span></button></div>`
+        `<div class="MessagesButton_headerIconContainer__E34Wc"><button class="MuiButtonBase-root MuiIconButton-root MessagesButton_buttonWithoutCount__AR23S" tabindex="0" type="button" role="link" aria-label="Halo+ Main Button" style="width: 11rem; margin-left: 20px;"><span class="MuiIconButton-label"><p class="font-display-regular text-white text-sm ml-4 font-semibold leading-tight uppercase" style="margin: 0;"><span class="xxs:hidden sm:inline" id="halo_plus_span">${
+          !!auth_session ? "Sync to Halo+" : "Login to Halo+"
+        }</span></p></span><span class="MuiTouchRipple-root"></span></button></div>`,
       );
 
       element.addEventListener("click", () => {
@@ -43,7 +44,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             alert(
               success
                 ? "Synced your cookies to Halo+"
-                : 'Your cookies have been synced to Halo+ already!\nFrom now on, Halo+ is automatically refreshing your cookies and you don\'t need to do anything!\n\nYou only need to check back to sync your cookies if the app tells you to!'
+                : "Your cookies have been synced to Halo+ already!\nFrom now on, Halo+ is automatically refreshing your cookies so you don't have to do anything!\n\nTIP: You only need to check back to sync your cookies if the app tells you to!",
             );
           });
 
